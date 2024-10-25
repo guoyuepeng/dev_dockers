@@ -1,0 +1,62 @@
+# Base image
+FROM ubuntu:22.04
+
+# Set Aliyun as the apt source
+RUN sed -i 's@http://.*.ubuntu.com@http://mirrors.aliyun.com@g' /etc/apt/sources.list
+
+# Install basic dependencies
+RUN DEBIAN_FRONTEND="noninteractive" apt-get update && apt-get -y install tzdata
+
+# Install build tools and dependencies
+RUN apt-get update \
+  && apt-get install -y build-essential \
+      gcc \
+      g++ \
+      gdb \
+      clang \
+      make \
+      ninja-build \
+      cmake \
+      autoconf \
+      automake \
+      libtool \
+      valgrind \
+      locales-all \
+      dos2unix \
+      rsync \
+      tar \
+      python3 \
+      python3-dev \
+      python3-pip \
+      python-is-python3 \
+      ca-certificates \
+      lsb-release \
+      wget \
+      libpng-dev \
+  && apt-get clean
+
+# Add Apache Arrow repository and install libraries
+RUN wget https://apache.jfrog.io/artifactory/arrow/$(lsb_release --id --short | tr 'A-Z' 'a-z')/apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb \
+  && apt-get install -y ./apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb \
+  && apt-get update \
+  && apt-get install -y \
+      libarrow-dev \
+      libarrow-glib-dev \
+      libarrow-dataset-dev \
+      libarrow-dataset-glib-dev \
+      libarrow-acero-dev \
+      libarrow-flight-dev \
+      libarrow-flight-glib-dev \
+      libarrow-flight-sql-dev \
+      libarrow-flight-sql-glib-dev \
+      libgandiva-dev \
+      libgandiva-glib-dev \
+      libparquet-dev \
+      libparquet-glib-dev \
+  && apt-get clean
+
+# Set working directory
+WORKDIR /workspace
+
+# Default command
+CMD ["bash"]
