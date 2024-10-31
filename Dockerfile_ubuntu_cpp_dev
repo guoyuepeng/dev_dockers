@@ -9,7 +9,7 @@ RUN DEBIAN_FRONTEND="noninteractive" apt-get update && apt-get -y install tzdata
 
 # Install build tools and dependencies
 RUN apt-get update \
-  && apt-get install -y build-essential \
+  && apt-get install -y build-essential git git-lfs \
       gcc \
       g++ \
       gdb \
@@ -32,7 +32,37 @@ RUN apt-get update \
       ca-certificates \
       lsb-release \
       wget \
+      curl \
+      ca-certificates \
+      vim \
   && apt-get clean
+
+# install clang
+RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
+    && apt-get -y install --no-install-recommends lsb-release wget software-properties-common gnupg \
+    && wget https://apt.llvm.org/llvm.sh \
+    && chmod u+x "$(pwd)/llvm.sh" \
+    && "$(pwd)/llvm.sh" 18 \
+    && update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-18 100 \
+    && update-alternatives --install /usr/bin/clang clang /usr/bin/clang-18 100 \
+    && update-alternatives --install /usr/bin/clangd clangd /usr/bin/clangd-18 100 \
+    && apt-get install -y clang-format-18 clang-tidy-18 \
+    && update-alternatives --install /usr/bin/clang-format clang-format /usr/bin/clang-format-18 100 \
+    && update-alternatives --install /usr/bin/clang-tidy clang-tidy /usr/bin/clang-tidy-18 100 \
+    && rm "$(pwd)/llvm.sh"
+
+# upgrade cmake 3.24.0
+RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
+    && apt-get -y install --no-install-recommends libssl-dev \
+    && wget "https://cmake.org/files/v3.24/cmake-3.24.0.tar.gz" \
+    && tar -zxvf "$(pwd)/cmake-3.24.0.tar.gz" -C "/usr/local" \
+    && rm "$(pwd)/cmake-3.24.0.tar.gz" \
+    && cd "/usr/local/cmake-3.24.0" \
+    && ./configure \
+    && make -j$(nproc) \
+    && make install \
+    && update-alternatives --install /usr/bin/cmake cmake /usr/local/bin/cmake 100 --force
+
 
 # Add Apache Arrow repository and install libraries
 RUN wget https://apache.jfrog.io/artifactory/arrow/$(lsb_release --id --short | tr 'A-Z' 'a-z')/apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb \
