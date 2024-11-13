@@ -17,6 +17,7 @@ RUN apt-get update \
       make \
       ninja-build \
       cmake \
+      libpthread-stubs0-dev \
       autoconf \
       automake \
       libtool \
@@ -35,6 +36,7 @@ RUN apt-get update \
       curl \
       ca-certificates \
       vim \
+      cppcheck \
   && apt-get clean
 
 # install clang
@@ -85,12 +87,25 @@ RUN wget https://apache.jfrog.io/artifactory/arrow/$(lsb_release --id --short | 
   && apt-get clean
 
 # install catch2 3
-RUN git clone https://github.com/catchorg/Catch2.git \
-    && cd Catch2 \
+RUN git clone https://github.com/catchorg/Catch2.git /tmp/Catch2 \
+    && cd /tmp/Catch2 \
     && git checkout v3.3.2 \
     && mkdir build && cd build \
     && cmake -DCATCH_BUILD_TESTING=OFF -DCATCH_ENABLE_WERROR=OFF -DCATCH_INSTALL_DOCS=OFF -DCATCH_INSTALL_HELPERS=OFF .. \
-    && make install
+    && make install \
+    && rm -rf /tmp/Catch2
+
+# install benchmark
+RUN git clone --branch v1.9.0 https://github.com/google/benchmark.git /tmp/benchmark --depth 1 \
+    && cd /tmp/benchmark \
+    && cmake -DCMAKE_BUILD_TYPE=Release -DBENCHMARK_ENABLE_TESTING=OFF -DBENCHMARK_ENABLE_GTEST_TESTS=OFF . \
+    && make -j`nproc` \
+    && make install \
+    && rm -rf /tmp/benchmark
+
+ENV CC=clang-18
+ENV CXX=clang++-18
+ENV LD=ld.lld-18
 
 # Set working directory
 WORKDIR /workspace
