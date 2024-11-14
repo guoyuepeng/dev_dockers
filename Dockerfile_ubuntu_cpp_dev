@@ -103,6 +103,11 @@ RUN git clone --branch v1.9.0 https://github.com/google/benchmark.git /tmp/bench
     && make install \
     && rm -rf /tmp/benchmark
 
+# install gperftools
+RUN git clone https://github.com/gperftools/gperftools.git /tmp/gperftools && cd /tmp/gperftools \
+    && git checkout gperftools-2.15 && ./autogen.sh && ./configure --with-tcmalloc-pagesize=64 \
+    && make --jobs=`nproc` && make install
+
 ENV CC=clang-18
 ENV CXX=clang++-18
 ENV LD=ld.lld-18
